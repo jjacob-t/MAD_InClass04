@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
@@ -35,16 +33,16 @@ class _CounterWidgetState extends State<CounterWidget> {
       super.initState();
       _controller = TextEditingController(text: "1");
     }
-
   @override
     void dispose() {
       _controller.dispose();
       super.dispose();
     }
     void _incrementCounter(int amount) {
+      // If amount to add will exceed limit, set counter to limit and give alert message in the snackbar
       if (_counter + amount > 100) {
-        _counter = 100;
         _history.insert(0, _counter);
+        _counter = 100;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Maximum limit reached!"),
@@ -54,6 +52,7 @@ class _CounterWidgetState extends State<CounterWidget> {
       } 
       else {
       setState(() {
+        // Insert at the beginning of the history list to ensure new past values appear at the top of the list
         _history.insert(0, _counter);
         _counter += amount;
       });
@@ -78,8 +77,10 @@ class _CounterWidgetState extends State<CounterWidget> {
   void _undoCounter() {
     setState(() {
       if (_history.length > 1) {
-        _history.removeAt(0);
+        // Set the counter to the first item in history list (most recent one), then pop it
         _counter = _history[0];
+        _history.removeAt(0);
+        
       }
     });
   }
@@ -97,7 +98,7 @@ class _CounterWidgetState extends State<CounterWidget> {
     }
   }
 
-//initial couter value
+//initialize counters and list for the past values
   int _counter = 0;
   int _customIncrement = 0;
   final List<int> _history = [];
@@ -113,6 +114,7 @@ class _CounterWidgetState extends State<CounterWidget> {
         children: [
           Center(
             child: Container(
+              // Border around the counter number
               decoration: BoxDecoration(
                 border: Border.all(
                   color: Colors.blue,
@@ -147,6 +149,9 @@ class _CounterWidgetState extends State<CounterWidget> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton(
+                style: const ButtonStyle(
+                  backgroundColor: WidgetStatePropertyAll<Color>(Colors.green),
+                ),
                 onPressed: () => _incrementCounter(1),
                 child: const Text('+1'),
               ),
@@ -157,42 +162,56 @@ class _CounterWidgetState extends State<CounterWidget> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton(
+                // If the counter is above 0 decrement it, else do nothing
                 onPressed: _counter > 0 ? _decrementCounter : null,
                 child: const Text('-1'),
               ),
               const SizedBox(width: 8),
               ElevatedButton(
+                style: const ButtonStyle(
+                  backgroundColor: WidgetStatePropertyAll<Color>(Colors.red),
+                ),
+                // If the counter is above 0 reset to 0, else do nothing
                 onPressed: _counter > 0 ? _resetCounter : null,
                 child: const Text('Reset'),
               ),
             ],
           ),
-         
+
+          ElevatedButton(
+          style: const ButtonStyle(
+                  backgroundColor: WidgetStatePropertyAll<Color>(Colors.amber),
+                ),
+          onPressed: _history.length > 1 ? _undoCounter : null,
+          child: const Text("Undo")
+          ),
+
           SizedBox(height: 12),
 
           TextField(
           controller: _controller,
           keyboardType: TextInputType.number,
           onChanged: (value) {
+            // Set the custom increment as the user types
             _customIncrement = int.tryParse(value) ?? 0;
           },
           onEditingComplete: () {
             setState(() {
+              // When enter is pressed, increment the counter with the value entered
               _incrementCounter(_customIncrement);
             });
+            // Clear field for new number and reset customincrement
             _controller.clear();
             _customIncrement = 0;
           },
           decoration: InputDecoration(
             border: OutlineInputBorder(),
-            labelText: 'Enter Custom Increment',
+            labelText: 'Enter Custom Increment (Enter to add)',
           ),
         ),
 
-        ElevatedButton(
-          onPressed: _history.length > 1 ? _undoCounter : null,
-          child: const Text("Undo")),
-
+        
+        // List to fill out the rest of the app and display last counter values as strings
         Expanded(
           child: ListView.builder(
             itemCount: _history.length,
